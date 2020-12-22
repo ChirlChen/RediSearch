@@ -181,3 +181,22 @@ def testScoreError(env):
     waitForIndex(env, 'idx')
     env.expect('ft.add idx doc1 0.01 fields title hello').ok()
     env.expect('ft.search idx hello EXPLAINSCORE').error().contains('EXPLAINSCORE must be accompanied with WITHSCORES')
+
+def testScoreExplainRedisLimit(env):
+    env.skipOnCluster()
+    env.expect('FT.CREATE idx SCHEMA '
+            'subtitle TEXT SORTABLE description TEXT SORTABLE '
+            'categories TAG SEPARATOR ; author_ids TAG SEPARATOR ;').ok()
+    env.expect('hset', 'doc1', 'categories', 'History',
+                                'description', 'Examines the remarkable legacy of the ancient Greeks, from the origins of Greek culture to the development '
+                                'of Western literature, drama, poetry, and philosophy to the Greek influence on human science, mathematics, and logic.',
+                                'subtitle', 'Why the Greeks Matter').equal(3)
+    res = [1L, 'doc1', ['9', ['Final TFIDF : words TFIDF 18.00 * document score 1.00 / norm 2 / slop 1',
+                                [['(Weight 1.00 * total children TFIDF 18.00)',
+                                    [['(Weight 1.00 * total children TFIDF 14.00)',
+                                        ['(TFIDF 10.00 = Weight 10.00 * TF 1 * IDF 1.00)',
+                                         '(Weight 1.00 * total children TFIDF 4.00)']],
+                                    ['(Weight 1.00 * total children TFIDF 4.00)',
+                                        ['(TFIDF 2.00 = Weight 1.00 * TF 2 * IDF 1.00)', 
+                                         '(TFIDF 2.00 = Weight 1.00 * TF 2 * IDF 1.00)']]]]]]]]
+    env.expect('FT.SEARCH', 'idx', '((@categories:{History}) => { $weight: 10 } greek) | greek', 'explainscore', 'withscores', 'nocontent').equal(res)

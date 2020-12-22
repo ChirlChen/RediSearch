@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define REPLY_MAX_DEPTH 7
+
 typedef struct RSScoreExplain {
   char *str;
   int numChildren;
