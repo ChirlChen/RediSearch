@@ -48,6 +48,9 @@ typedef enum {
   /* Lexical range */
   QN_LEXRANGE,
 
+  /* Used by coordinator to mark  network result processor */
+  QN_NETWORK,
+
   /* Null term - take no action */
   QN_NULL
 } QueryNodeType;

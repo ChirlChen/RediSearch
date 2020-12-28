@@ -89,6 +89,7 @@ void QueryNode_Free(QueryNode *n) {
     case QN_OPTIONAL:
     case QN_NULL:
     case QN_PHRASE:
+    case QN_NETWORK:
       break;
   }
   rm_free(n);
@@ -788,6 +789,8 @@ IndexIterator *Query_EvalNode(QueryEvalCtx *q, QueryNode *n) {
       return Query_EvalWildcardNode(q, n);
     case QN_NULL:
       return NewEmptyIterator();
+    case QN_NETWORK:
+      RS_LOG_ASSERT(0, "Oops");
   }
 
   return NULL;
@@ -1017,26 +1020,26 @@ static sds QueryNode_DumpSds(sds s, const IndexSpec *spec, const QueryNode *qs, 
       s = doPad(s, depth);
       break;
     case QN_GEO:
-
       s = sdscatprintf(s, "GEO %s:{%f,%f --> %f %s", qs->gn.gf->property, qs->gn.gf->lon,
                        qs->gn.gf->lat, qs->gn.gf->radius,
                        GeoDistance_ToString(qs->gn.gf->unitType));
       break;
     case QN_IDS:
-
       s = sdscat(s, "IDS { ");
       for (int i = 0; i < qs->fn.len; i++) {
         s = sdscatprintf(s, "%llu,", (unsigned long long)qs->fn.ids[i]);
       }
       break;
     case QN_WILDCARD:
-
       s = sdscat(s, "<WILDCARD>");
       break;
     case QN_FUZZY:
       s = sdscatprintf(s, "FUZZY{%s}\n", qs->fz.tok.str);
       return s;
 
+    case QN_NETWORK:
+      s = sdscat(s, "<NETWORK - Coordinator>");
+      break;
     case QN_NULL:
       s = sdscat(s, "<empty>");
   }
